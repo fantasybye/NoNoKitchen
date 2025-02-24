@@ -1,4 +1,4 @@
-/* pages/category/index.wxss */
+/* pages/menu/index.wxss */
 
 page, scroll-view, view {
   box-sizing: border-box;
@@ -12,24 +12,22 @@ page {
   height: 100%;
 }
 
-/*选项卡的样式*/
-
 .tabs {
   border-top: 2rpx solid #b3b3b3;
   border-bottom: 2rpx solid #d8d8d8;
   white-space: nowrap;
-  height: 91rpx;
+  height: 72rpx;
   background-color: #fff;
   width: 100%;
 }
 
 .tabs-item {
   display: inline-block;
-  width: 33%;
+  width: 50%;
   text-align: center;
-  font-size: 32rpx;
-  padding: 20rpx 0;
-  border-bottom: 6rpx solid transparent;
+  font-size: 26rpx;
+  padding: 14rpx 0;
+  border-bottom: 4rpx solid transparent;
   color: #999;
 }
 

@@ -1,24 +1,67 @@
-// pages/category/index.js
+// pages/menu/index.js
 Page({
   data: {
+    // 页面参数
     scrollLeft: 0,
     currentTab: 0,
     windowWidth: 0,
+    tabsContentHeight: 0,
+    tabHeight: 0,
+    categoryBoxScrollTop: 0,
+    categoryBoxScrollIntoView: 0,
+    isScrollWithAnimation: false,
+    isLoaded: false,
+    animationData: {},
+
+    // 点餐相关参数
     currentCategory: 0,
     currentCategoryTitle: 0,
     currentCategoryContent: 15,
     isCategoryItemTap: false,
-    isScrollWithAnimation: false,
     isAddItemTopArray: true,
     itemTopArray: [],
-    animationData: {},
-    isLoaded: false,
     isContentCanFloat: [],
-    //设置菜单分类导航的自动滑动
-    tabsContentHeight: 0,
-    tabHeight: 0,
-    categoryBoxScrollTop: 0,
-    categoryBoxScrollIntoView: 0
+    cartItems: [],
+    categoryCounts: {},
+    categories: [
+      { id: 0, icon: '../../images/category-icon/zhuanchang.png', name: '炒菜' },
+      { id: 1, icon: '../../images/category-icon/zhuanchang.png', name: '汤菜' },
+      { id: 2, icon: '../../images/category-icon/zhuanchang.png', name: '烧菜' },
+      { id: 3, icon: '../../images/category-icon/zhuanchang.png', name: '主食' },
+    ],
+    goods: [
+      { id: '00', categoryId: 0, image: '../../images/food.jpg', title: '油炸花生米' },
+      { id: '01', categoryId: 1, image: '../../images/food.jpg', title: '白切鸡' },
+      { id: '02', categoryId: 2, image: '../../images/food.jpg', title: '凉拌土豆丝' },
+      { id: '03', categoryId: 3, image: '../../images/food.jpg', title: '烧菜' }
+    ],
+  },
+  switchCategory(e) {
+    this.setData({
+      currentCategory: e.detail.category
+    });
+  },
+  addToCart(e) {
+    console.log('Add to cart:', e.detail.title);
+    const item = e.detail.item;
+    const cartItems = this.data.cartItems;
+    const index = cartItems.findIndex(cartItem => cartItem.id === item.id);
+    if (index > -1) {
+      cart[index].quantity += 1;
+    } else {
+      cart.push({ ...item, quantity: 1 });
+    }
+    this.updateCategoryCount(item.categoryId);
+    this.setData({ cartItems });
+  },
+  updateCategoryCount(categoryId) {
+    const categoryCounts = this.data.categoryCounts;
+    if (categoryCounts[categoryId]) {
+      categoryCounts[categoryId] += 1;
+    } else {
+      categoryCounts[categoryId] = 1;
+    }
+    this.setData({ categoryCounts });
   },
   onLoad: function (options) {
     // 页面初始化 options为页面跳转所带来的参数
