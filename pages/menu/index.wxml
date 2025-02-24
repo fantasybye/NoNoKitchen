@@ -6,151 +6,58 @@
 <swiper class="tabs-content" current="{{currentTab}}" bindchange="changeTab">
   <swiper-item class="tabs-content-item">
     <view class="goods-content">
-      <scroll-view class="category-box" scroll-y="true" scroll-into-view="category-Box-item-{{categoryBoxScrollIntoView}}" bindscroll="doCategoryBoxScroll" style="height:100%;">
-        <category-item wx:for="{{categories}}" wx:key="id" category="{{item.id}}" active="{{currentCategory == item.id}}" icon="{{item.icon}}" name="{{item.name}}" bindswitchCategory="switchCategory"></category-item>
+      <scroll-view
+        class="category-box"
+        scroll-y="true"
+        scroll-into-view="category-Box-item-{{categoryBoxScrollIntoView}}"
+        bindscroll="doCategoryBoxScroll"
+        style="height:100%;"
+      >
+        <category-item
+          wx:for="{{categories}}"
+          wx:key="id"
+          category="{{item.id}}"
+          active="{{currentCategory == item.id}}"
+          icon="{{item.icon}}"
+          name="{{item.name}}"
+          bindswitchCategory="switchCategory">
+        </category-item>
       </scroll-view>
-      <scroll-view class="category-contents" scroll-y="true" scroll-into-view="category-contents-item-{{currentCategoryContent}}" scroll-with-animation="{{isScrollWithAnimation}}" bindscroll="doCategoryContentsScroll" bindscrolltolower="doCategoryContentsToLower"
-      lower-threshold="100" style="height:100%;">
-        <view id="category-contents-item-0" class="category-contents-item">
-          <view class="goods-box">
-            <goods-item wx:for="{{goods}}" wx:key="id" image="{{item.image}}" title="{{item.title}}" intro="{{item.intro}}" sales="{{item.sales}}" likes="{{item.likes}}" price="{{item.price}}" bindaddToCart="addToCart"></goods-item>
-          </view>
-        </view>
-        <view id="category-contents-item-1" class="category-contents-item">
+      <scroll-view
+        class="category-contents"
+        scroll-y="true"
+        scroll-into-view="category-contents-item-{{currentCategoryContent}}"
+        scroll-with-animation="{{isScrollWithAnimation}}"
+        bindscroll="doCategoryContentsScroll"
+        bindscrolltolower="doCategoryContentsToLower"
+        lower-threshold="100"
+        style="height:100%;"
+      >
+        <view
+          wx:for="{{categories}}"
+          wx:key="id"
+          id="category-contents-item-{{item.id}}"
+          class="category-contents-item"
+        >
           <view class="goods-box-title">
-            <view class="{{currentCategoryTitle==1?'fixed-title':''}}">主食1</view>
+            <view class="{{currentCategoryTitle==item.id?'fixed-title':''}}">{{item.name}}</view>
           </view>
           <view class="goods-box">
-            <view class="goods-item">
-              <image src="../../images/food.jpg"></image>
-              <view class="goods-info-box">
-                <view class="goods-title">油炸花生米</view>
-                <view class="goods-intro">我贯穿南北，就为与你相见</view>
-                <view class="goods-likes">
-                  <view class="goods-likes-left">月售2</view>
-                  <view class="goods-likes-right">赞1</view>
-                </view>
-                <view class="goods-tools">
-                  <view class="goods-price">￥26</view>
-                  <view class="goods-add">+</view>
-                </view>
-              </view>
-            </view>
-            <view class="goods-item">
-              <image src="../../images/food.jpg"></image>
-              <view class="goods-info-box">
-                <view class="goods-title">白切鸡</view>
-                <view class="goods-intro">正宗三黄鸡，色泽金黄，辅以角料，美味不用等</view>
-                <view class="goods-likes">
-                  <view class="goods-likes-left">月售2</view>
-                  <view class="goods-likes-right">赞1</view>
-                </view>
-                <view class="goods-tools">
-                  <view class="goods-price">￥26</view>
-                  <view class="goods-add">+</view>
-                </view>
-              </view>
-            </view>
-            <view class="goods-item">
-              <image src="../../images/food.jpg"></image>
-              <view class="goods-info-box">
-                <view class="goods-title">凉拌土豆丝</view>
-                <view class="goods-likes">
-                  <view class="goods-likes-left">月售2</view>
-                  <view class="goods-likes-right">赞1</view>
-                </view>
-                <view class="goods-tools">
-                  <view class="goods-price">￥10</view>
-                  <view class="goods-select">选规格</view>
-                </view>
-              </view>
-            </view>
-            <view class="goods-item">
-              <image src="../../images/food.jpg"></image>
-              <view class="goods-info-box">
-                <view class="goods-title">凉拌土豆丝</view>
-                <view class="goods-likes">
-                  <view class="goods-likes-left">月售2</view>
-                  <view class="goods-likes-right">赞1</view>
-                </view>
-                <view class="goods-tools">
-                  <view class="goods-price">￥26</view>
-                  <view class="goods-add">+</view>
-                </view>
-              </view>
-            </view>
-          </view>
-        </view>
-        <view id="category-contents-item-2" class="category-contents-item">
-          <view class="goods-box-title">
-            <view class="{{currentCategoryTitle==2?'fixed-title':''}}">主食2</view>
-          </view>
-          <view class="goods-box">
-            <view class="goods-item">
-              <image src="../../images/food.jpg"></image>
-              <view class="goods-info-box">
-                <view class="goods-title">油炸花生米</view>
-                <view class="goods-intro">我贯穿南北，就为与你相见</view>
-                <view class="goods-likes">
-                  <view class="goods-likes-left">月售2</view>
-                  <view class="goods-likes-right">赞1</view>
-                </view>
-                <view class="goods-tools">
-                  <view class="goods-price">￥26</view>
-                  <view class="goods-add">+</view>
-                </view>
-              </view>
-            </view>
-            <view class="goods-item">
-              <image src="../../images/food.jpg"></image>
-              <view class="goods-info-box">
-                <view class="goods-title">白切鸡</view>
-                <view class="goods-intro">正宗三黄鸡，色泽金黄，辅以角料，美味不用等</view>
-                <view class="goods-likes">
-                  <view class="goods-likes-left">月售2</view>
-                  <view class="goods-likes-right">赞1</view>
-                </view>
-                <view class="goods-tools">
-                  <view class="goods-price">￥26</view>
-                  <view class="goods-add">+</view>
-                </view>
-              </view>
-            </view>
-            <view class="goods-item">
-              <image src="../../images/food.jpg"></image>
-              <view class="goods-info-box">
-                <view class="goods-title">凉拌土豆丝</view>
-                <view class="goods-likes">
-                  <view class="goods-likes-left">月售2</view>
-                  <view class="goods-likes-right">赞1</view>
-                </view>
-                <view class="goods-tools">
-                  <view class="goods-price">￥10</view>
-                  <view class="goods-select">选规格</view>
-                </view>
-              </view>
-            </view>
-            <view class="goods-item">
-              <image src="../../images/food.jpg"></image>
-              <view class="goods-info-box">
-                <view class="goods-title">凉拌土豆丝</view>
-                <view class="goods-likes">
-                  <view class="goods-likes-left">月售2</view>
-                  <view class="goods-likes-right">赞1</view>
-                </view>
-                <view class="goods-tools">
-                  <view class="goods-price">￥26</view>
-                  <view class="goods-add">+</view>
-                </view>
-              </view>
-            </view>
+            <goods-item
+              wx:for="{{goods}}"
+              wx:key="id"
+              wx:if="{{item.id == currentCategory}}"
+              image="{{item.image}}"
+              title="{{item.title}}"
+              bindaddToCart="addToCart">
+            </goods-item>
           </view>
         </view>
       </scroll-view>
     </view>
   </swiper-item>
   <swiper-item class="tabs-content-item">
-    <view class="content">评价内容</view>
+    <view class="content">本厨房由御猪园大总管小布子倾情打造</view>
   </swiper-item>
 </swiper>
 <view class="shopping-box">

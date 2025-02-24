@@ -1,7 +1,6 @@
 {
   "pages": [
     "pages/menu/index",
-    "pages/pay/index",
     "pages/index/index",
     "pages/logs/logs",
     "pages/flex/index"

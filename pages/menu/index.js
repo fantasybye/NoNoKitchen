@@ -2,7 +2,6 @@
 Page({
   data: {
     // 页面参数
-    scrollLeft: 0,
     currentTab: 0,
     windowWidth: 0,
     tabsContentHeight: 0,
@@ -104,19 +103,6 @@ Page({
     })
 
     this.animation = animation
-
-    /*animation.scale(2, 2).rotate(45).step()
-
-    this.setData({
-      animationData: animation.export()
-    })
-
-    setTimeout(function () {
-      animation.translate(30).step()
-      this.setData({
-        animationData: animation.export()
-      })
-    }.bind(this), 1000)*/
   },
   fadeOut: function () {
     this.animation.scale(2, 2).opacity(0).step()
@@ -154,12 +140,7 @@ Page({
     // 页面关闭
   },
   changeTab: function (e) {
-    var scrollLeft = ((e.detail.current + 1) - 3) + 1;
-    if (scrollLeft < 0) {
-      scrollLeft = 0;
-    }
     this.setData({
-      scrollLeft: scrollLeft * (this.data.windowWidth / 3),
       currentTab: e.detail.current
     });
   },
