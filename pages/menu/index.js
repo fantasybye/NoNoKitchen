@@ -1,4 +1,9 @@
 // pages/menu/index.js
+const { PAGE_CONFIG } = require('../../utils/config');
+const { throttle, showConfirm, showSuccess, showLoading, hideLoading, handleError } = require('../../utils/util');
+const orderService = require('../../services/orderService');
+const dishService = require('../../services/dishService');
+
 Page({
   data: {
     // 页面参数
@@ -22,298 +27,364 @@ Page({
     isContentCanFloat: [],
     cartItems: [],
     categoryCounts: {},
+    // 购物车弹出窗相关参数
+    isCartPopupShow: false,
+
+    // 订单相关参数
+    orders: [],
+    isOrderDetailShow: false,
+    currentOrder: null,
+    currentPage: 1,
+    hasMore: true,
+
+    // 菜品数据
+    allDishes: [],
+    currentCategoryDishes: [],
+
     categories: [
-      { id: 0, icon: '../../images/category-icon/zhuanchang.png', name: '炒菜' },
-      { id: 1, icon: '../../images/category-icon/zhuanchang.png', name: '汤菜' },
-      { id: 2, icon: '../../images/category-icon/zhuanchang.png', name: '烧菜' },
-      { id: 3, icon: '../../images/category-icon/zhuanchang.png', name: '主食' },
+      { id: 0, icon: '../../images/category-icon/huncai.png', name: '荤菜' },
+      { id: 1, icon: '../../images/category-icon/sucai.png', name: '素菜' },
+      { id: 2, icon: '../../images/category-icon/tang.png', name: '汤菜' },
+      { id: 3, icon: '../../images/category-icon/zhushi.png', name: '主食' },
+      { id: 4, icon: '../../images/category-icon/tiandian.png', name: '甜点' },
+      { id: 5, icon: '../../images/category-icon/shuiguo.png', name: '水果' },
     ],
-    goods: [
-      { id: '00', categoryId: 0, image: '../../images/food.jpg', title: '油炸花生米' },
-      { id: '01', categoryId: 1, image: '../../images/food.jpg', title: '白切鸡' },
-      { id: '02', categoryId: 2, image: '../../images/food.jpg', title: '凉拌土豆丝' },
-      { id: '03', categoryId: 3, image: '../../images/food.jpg', title: '烧菜' }
-    ],
+
+    imageCache: new Map(), // 用于缓存图片加载状态
   },
-  switchCategory(e) {
+
+  onLoad: function (options) {
+    // 确保弹窗状态为关闭
     this.setData({
-      currentCategory: e.detail.category
+      isCartPopupShow: false,
+      isOrderDetailShow: false,
+      currentOrder: null
     });
+    this.initPage();
   },
+
+  // 切换标签页
+  setCurrentTab(e) {
+    const tab = parseInt(e.currentTarget.dataset.tab);
+    this.setData({
+      currentTab: tab,
+      // 切换标签页时关闭所有弹窗
+      isCartPopupShow: false,
+      isOrderDetailShow: false,
+      currentOrder: null
+    });
+    // 切换到订单标签页时加载订单列表
+    if (tab === 1) {
+      this.loadOrders();
+    }
+  },
+
+  // 切换标签页
+  changeTab(e) {
+    const tab = e.detail.current;
+    this.setData({
+      currentTab: tab,
+      // 切换标签页时关闭所有弹窗
+      isCartPopupShow: false,
+      isOrderDetailShow: false,
+      currentOrder: null
+    });
+    // 切换到订单标签页时加载订单列表
+    if (tab === 1) {
+      this.loadOrders();
+    }
+  },
+
+  // 初始化页面
+  async initPage() {
+    try {
+      // 获取窗口信息
+      const res = await wx.getWindowInfo();
+      this.setData({ windowWidth: res.windowWidth });
+
+      // 加载菜品数据
+      await this.loadDishes();
+
+      // 初始化分类滚动
+      this.initCategoryScroll();
+    } catch (error) {
+      console.error('页面初始化失败:', error);
+    }
+  },
+
+  // 初始化分类滚动
+  initCategoryScroll() {
+    const totalCont = 15;
+    this.setData({
+      currentCategoryContent: totalCont,
+      categoryBoxScrollIntoView: totalCont
+    });
+
+    const timer = setInterval(() => {
+      const currentCont = this.data.currentCategoryContent - 1;
+      if (currentCont < 0) {
+        clearInterval(timer);
+        this.setData({
+          isAddItemTopArray: false,
+          isLoaded: true
+        });
+      } else {
+        this.setData({
+          currentCategoryContent: currentCont,
+          categoryBoxScrollIntoView: currentCont
+        });
+      }
+    }, 300);
+  },
+
+  // 处理图片加载
+  onImageLoad(e) {
+    const { index, category } = e.currentTarget.dataset;
+    const key = `${category}-${index}`;
+
+    // 更新图片加载状态
+    this.setData({
+      [`currentCategoryDishes[${index}].imageLoaded`]: true
+    });
+
+    // 缓存图片加载状态
+    this.data.imageCache.set(key, true);
+  },
+
+  // 加载菜品数据
+  async loadDishes() {
+    try {
+      const dishes = await dishService.getAllDishes();
+      this.setData({
+        allDishes: dishes,
+        currentCategoryDishes: this.filterDishesByCategory(this.data.currentCategory)
+      });
+    } catch (error) {
+      console.error('加载菜品失败:', error);
+    }
+  },
+
+  // 根据分类过滤菜品
+  filterDishesByCategory(categoryId) {
+    return this.data.allDishes.filter(dish => dish.categoryId === categoryId);
+  },
+
+  // 切换分类
+  switchCategory(e) {
+    const category = e.detail.category;
+    if (typeof category === 'number') {
+      this.setData({
+        currentCategory: category,
+        currentCategoryDishes: this.filterDishesByCategory(category)
+      });
+    }
+  },
+
+  // 添加到购物车
   addToCart(e) {
-    console.log('Add to cart:', e.detail.title);
     const item = e.detail.item;
-    const cartItems = this.data.cartItems;
-    const index = cartItems.findIndex(cartItem => cartItem.id === item.id);
-    if (index > -1) {
-      cart[index].quantity += 1;
-    } else {
-      cart.push({ ...item, quantity: 1 });
+    let cartItems = this.data.cartItems.slice();
+
+    if (cartItems.findIndex(cartItem => cartItem.id === item.id) === -1) {
+      let newItem = Object.assign({}, item);
+      newItem.quantity = 1;
+      cartItems.push(newItem);
+
+      this.setData({ cartItems });
+      this.updateCategoryCount(item.categoryId);
+      this.updateGoodsItemStatus();
     }
-    this.updateCategoryCount(item.categoryId);
-    this.setData({ cartItems });
   },
+
+  // 从购物车移除
+  removeFromCart(e) {
+    const item = e.currentTarget.dataset.item;
+    let cartItems = this.data.cartItems.filter(cartItem => cartItem.id !== item.id);
+
+    this.setData({ cartItems });
+    this.updateCategoryCount(item.categoryId);
+    this.updateGoodsItemStatus();
+  },
+
+  // 更新类别计数
   updateCategoryCount(categoryId) {
-    const categoryCounts = this.data.categoryCounts;
-    if (categoryCounts[categoryId]) {
-      categoryCounts[categoryId] += 1;
-    } else {
-      categoryCounts[categoryId] = 1;
-    }
+    const count = this.data.cartItems.filter(item => item.categoryId === categoryId).length;
+    const categoryCounts = Object.assign({}, this.data.categoryCounts);
+    categoryCounts[categoryId] = count;
     this.setData({ categoryCounts });
   },
-  onLoad: function (options) {
-    // 页面初始化 options为页面跳转所带来的参数
-    var that = this;
-    wx.getSystemInfo({
-      success: function (res) {
-        that.setData({
-          windowWidth: res.windowWidth
-        });
-      }
-    });
-    setTimeout(function () {
-      //初始化时获取每个子view的offsetTop位置
-      var totalCont = 15;
-      that.setData({
-        currentCategoryContent: totalCont,
-        categoryBoxScrollIntoView: totalCont
-      });
 
-      var timer = setInterval(function () {
-        totalCont--;
-        if (totalCont < 0) {
-          clearInterval(timer);
-        }
-        that.setData({
-          currentCategoryContent: totalCont
-        });
-        //}, 800); //todo开发者工具上的模拟器上运行应用这个计算时间，真机运行应用下面那个300毫秒的时间
-      }, 300); //这个100毫秒意味着1秒钟会计算10种分类的菜类的offsetTop,20种分类的菜类的offsetTop要两秒钟计算完成，改成70的话大概一秒钟要计算15钟菜类的offsetTop
-    }, 1000);
-  },
-  onReady: function () {
-    // 页面渲染完成
-  },
-  onShow: function () {
-    // 页面显示
-    var animation = wx.createAnimation({
-      duration: 2000,
-      timingFunction: 'ease',
-    })
+  // 更新商品状态
+  updateGoodsItemStatus() {
+    try {
+      const pages = getCurrentPages();
+      if (!pages || pages.length === 0) return;
 
-    this.animation = animation
-  },
-  fadeOut: function () {
-    this.animation.scale(2, 2).opacity(0).step()
-    this.setData({
-      animationData: this.animation.export()
-    })
-  },
-  rotateAndScale: function () {
-    // 旋转同时放大
-    this.animation.rotate(45).scale(2, 2).step()
-    this.setData({
-      animationData: this.animation.export()
-    })
-  },
-  rotateThenScale: function () {
-    // 先旋转后放大
-    this.animation.rotate(45).step()
-    this.animation.scale(2, 2).step()
-    this.setData({
-      animationData: this.animation.export()
-    })
-  },
-  rotateAndScaleThenTranslate: function () {
-    // 先旋转同时放大，然后平移
-    this.animation.rotate(45).scale(2, 2).step()
-    this.animation.translate(100, 100).step({ duration: 1000 })
-    this.setData({
-      animationData: this.animation.export()
-    })
-  },
-  onHide: function () {
-    // 页面隐藏
-  },
-  onUnload: function () {
-    // 页面关闭
-  },
-  changeTab: function (e) {
-    this.setData({
-      currentTab: e.detail.current
-    });
-  },
-  setCurrentTab: function (e) {
-    this.setData({
-      currentTab: e.target.dataset.tab
-    });
-  },
-  switchCategory: function (e) {
-    var isContentCanFloatArr = this.data.isContentCanFloat;
-    if (isContentCanFloatArr[parseInt(e.currentTarget.dataset.category)]) {
-      this.setData({
-        currentCategoryTitle: e.currentTarget.dataset.category
-      });
-    } else {
-      this.setData({
-        currentCategoryTitle: isContentCanFloatArr.length
-      });
-    }
-    this.setData({
-      currentCategory: e.currentTarget.dataset.category,
-      currentCategoryContent: e.currentTarget.dataset.category,
-      isCategoryItemTap: true
-    });
+      const page = pages[pages.length - 1];
+      if (page.route !== 'pages/menu/index') return;
 
-    //延时1秒，禁用doCategoryContentsScroll中的滚动事件的代码块
-    setTimeout(function () {
-      this.setData({
-        isCategoryItemTap: false
-      });
-    }.bind(this), 1000);
-  },
-  doCategoryBoxScroll: function (e) {
-    if (this.data.isAddItemTopArray) {
-      this.setData({
-        tabsContentHeight: e.detail.scrollHeight - e.detail.scrollTop,
-        tabHeight: e.detail.scrollHeight / 16
-      });
-    } else {
-      var top = e.detail.scrollTop;
-      this.setData({
-        categoryBoxScrollTop: top
-      });
-    }
-  },
-  doCategoryContentsScroll: function (e) {
-    if (this.data.isAddItemTopArray) {
-      //初始化时获取每个子view的offsetTop位置
-      var tempArr = this.data.itemTopArray;
-      tempArr.unshift(e.detail.scrollTop);
-      this.setData({
-        itemTopArray: tempArr
-      });
-      if (e.detail.scrollTop <= 20) { //20是保险值，本应该是0
-        var that = this;
-        setTimeout(function () {
-          that.setData({
-            isScrollWithAnimation: true,
-            isAddItemTopArray: false,
-            isLoaded: true,
-            categoryBoxScrollIntoView: 0
-          });
-          //校验itemTopArray的长度
-          if (tempArr.length < 15 + 1) {
-            var lastValue = tempArr[tempArr.length - 1];
-            for (var m = 15; m > tempArr.length - 1; m--) {
-              tempArr.push(lastValue);
-            }
-            that.setData({
-              itemTopArray: tempArr
-            });
-          }
-          var tempCanFloatArr = [];
-          for (var k = 0; k < tempArr.length; k++) {
-            //判断最后一个要不要把title漂浮起来
-            var currContentHeight = e.detail.scrollHeight - tempArr[k];
-            if (currContentHeight <= that.data.tabsContentHeight) {
-              //只有最后一个内容区的高度大于滑动区的高度，最后一个内容区的标题可漂浮
-              tempCanFloatArr.push(false);
-            } else {
-              tempCanFloatArr.push(true);
-            }
-          }
-          that.setData({
-            isContentCanFloat: tempCanFloatArr
-          });
-          //下面的模态弹出框调试滑动view的offsetTop时打开
-          /*wx.showModal({
-            title: 'view个数',
-            //content: that.data.itemTopArray.join(','),
-            content: that.data.itemTopArray.length + "",
-            success: function (res) {
-              if (res.confirm) {
-                console.log('用户点击确定')
-              } else if (res.cancel) {
-                console.log('用户点击取消')
-              }
-            }
-          });*/
-        }, 2000);
-        that.fadeOut();
-      }
-    } else {
-      //减少操作太频繁的计算量
-      if (!this.data.isCategoryItemTap) {
-        for (var i = 0; i < this.data.itemTopArray.length; i++) {
-          if (e.detail.scrollTop < this.data.itemTopArray[i + 1]) {
-            if (this.data.currentCategory != i) {
-              var isContentCanFloatArr = this.data.isContentCanFloat;
-              if (isContentCanFloatArr[i]) {
-                this.setData({
-                  currentCategoryTitle: i
-                });
-              } else {
-                this.setData({
-                  currentCategoryTitle: isContentCanFloatArr.length
-                });
-              }
-              this.setData({
-                currentCategory: i
-              });
-              //滚动菜单分类
-              var currentCategoryBox_offsetTop = i * this.data.tabHeight;
-              var categoryBoxScrollTop_temp = this.data.categoryBoxScrollTop;
-              var min_categoryBoxScrollTop = categoryBoxScrollTop_temp;
-              var max_categoryBoxScrollTop = min_categoryBoxScrollTop + this.data.tabsContentHeight;
-              if (currentCategoryBox_offsetTop < min_categoryBoxScrollTop) {
-                //说明已经在屏幕的可视区的上方了，让滚动条向下一个tabHeight
-                var scroll_top = currentCategoryBox_offsetTop;
-                var scroll_view = Math.floor(scroll_top / this.data.tabHeight);
-                if (scroll_view < 0) {
-                  scroll_view = 0;
-                }
-                this.setData({
-                  categoryBoxScrollTop: scroll_top,
-                  categoryBoxScrollIntoView: scroll_view
-                });
-              } else if (currentCategoryBox_offsetTop + this.data.tabHeight > max_categoryBoxScrollTop) {
-                //说明已经在屏幕的可视区的下方了，让滚动条向上移动一个tabHeight
-                var scroll_top = min_categoryBoxScrollTop + (currentCategoryBox_offsetTop + this.data.tabHeight - max_categoryBoxScrollTop);
-                var scroll_view = Math.ceil(scroll_top / this.data.tabHeight);
-                if (scroll_view > 15) {
-                  scroll_view = 15;
-                }
-                this.setData({
-                  categoryBoxScrollIntoView: scroll_view
-                });
-              }
-            }
-            break;
+      const goodsItems = page.selectAllComponents('.goods-item');
+      if (!goodsItems || !goodsItems.length) return;
+
+      const cartItemIds = this.data.cartItems.map(item => item.id);
+      goodsItems.forEach(component => {
+        if (component && component.properties && component.properties.item) {
+          const itemId = component.properties.item.id;
+          if (typeof component.setAddedState === 'function') {
+            component.setAddedState(cartItemIds.includes(itemId));
           }
         }
-      }
+      });
+    } catch (err) {
+      console.error('更新商品状态失败', err);
     }
   },
-  doCategoryContentsToLower: function (e) {
-    if (!this.data.isAddItemTopArray) {
-      if (!this.data.isCategoryItemTap) {
-        var isContentCanFloatArr = this.data.isContentCanFloat;
-        if (isContentCanFloatArr[15]) {
-          this.setData({
-            currentCategoryTitle: 15
-          });
-        } else {
-          this.setData({
-            currentCategoryTitle: isContentCanFloatArr.length
-          });
-        }
-        this.setData({
-          currentCategory: 15,
-          categoryBoxScrollIntoView: 15
-        });
-      }
+
+  // 加载订单列表
+  async loadOrders(page = 1) {
+    try {
+      const orders = await orderService.getOrders(page, PAGE_CONFIG.PAGE_SIZE);
+      this.setData({
+        orders: page === 1 ? orders : this.data.orders.concat(orders),
+        hasMore: orders.length === PAGE_CONFIG.PAGE_SIZE,
+        currentPage: page
+      });
+    } catch (error) {
+      console.error('加载订单失败:', error);
     }
-  }
-})
+  },
+
+  // 加载更多订单
+  async loadMoreOrders() {
+    if (!this.data.hasMore) return;
+    await this.loadOrders(this.data.currentPage + 1);
+  },
+
+  // 提交订单
+  async submitOrder() {
+    if (this.data.cartItems.length === 0) {
+      wx.showToast({
+        title: '请先选择菜品',
+        icon: 'none'
+      });
+      return;
+    }
+
+    const confirmed = await showConfirm('确认下单', '确定要提交这个订单吗？');
+    if (!confirmed) return;
+
+    try {
+      const dishes = this.data.cartItems.map(item => {
+        const newItem = Object.assign({}, item);
+        delete newItem.quantity;
+        return newItem;
+      });
+
+      // 只包含菜品和创建时间
+      const orderData = {
+        dishes,
+        createTime: new Date().toISOString()
+      };
+
+      await orderService.createOrder(orderData);
+
+      showSuccess('下单成功');
+
+      // 清空购物车
+      this.setData({
+        cartItems: [],
+        isCartPopupShow: false,
+        categoryCounts: {}
+      });
+
+      // 更新商品状态
+      this.updateGoodsItemStatus();
+
+      // 重新加载订单列表
+      await this.loadOrders();
+    } catch (error) {
+      console.error('提交订单失败:', error);
+    }
+  },
+
+  // 查看订单详情
+  async viewOrderDetail(e) {
+    const orderId = e.currentTarget.dataset.id;
+    try {
+      // 先关闭之前的弹窗
+      this.setData({
+        isOrderDetailShow: false,
+        currentOrder: null
+      });
+
+      // 获取新订单详情
+      const order = await orderService.getOrderDetail(orderId);
+
+      // 显示新订单详情
+      this.setData({
+        currentOrder: order,
+        isOrderDetailShow: true
+      });
+    } catch (error) {
+      console.error('获取订单详情失败:', error);
+      // 发生错误时确保弹窗关闭
+      this.setData({
+        isOrderDetailShow: false,
+        currentOrder: null
+      });
+    }
+  },
+
+  // 切换购物车弹出窗
+  toggleCartPopup() {
+    // 切换购物车时关闭订单详情
+    this.setData({
+      isCartPopupShow: !this.data.isCartPopupShow,
+      isOrderDetailShow: false,
+      currentOrder: null
+    });
+  },
+
+  // 关闭购物车弹出窗
+  closeCartPopup() {
+    this.setData({
+      isCartPopupShow: false
+    });
+  },
+
+  // 关闭订单详情
+  closeOrderDetail() {
+    this.setData({
+      isOrderDetailShow: false,
+      currentOrder: null
+    });
+  },
+
+  // 页面事件处理
+  onPullDownRefresh: async function() {
+    try {
+      // 刷新时关闭所有弹窗
+      this.setData({
+        isCartPopupShow: false,
+        isOrderDetailShow: false,
+        currentOrder: null
+      });
+
+      await Promise.all([
+        this.loadDishes(),
+        this.loadOrders(1)
+      ]);
+      wx.stopPullDownRefresh();
+    } catch (error) {
+      console.error('下拉刷新失败:', error);
+    }
+  },
+
+  onReachBottom: function() {
+    if (this.data.currentTab === 1) {
+      this.loadMoreOrders();
+    }
+  },
+
+  // 其他页面方法保持不变...
+});

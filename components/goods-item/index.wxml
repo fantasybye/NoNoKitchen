@@ -1,9 +1,12 @@
 <view class="goods-item">
-  <image src="{{image}}"></image>
+  <image class="goods-item-image" src="{{image}}"></image>
   <view class="goods-info-box">
     <view class="goods-title">{{title}}</view>
     <view class="goods-tools">
-      <view class="goods-add" bindtap="onAdd" data-item="{{item}}">+</view>
+      <view class="goods-add {{isAdded ? 'added' : ''}}" bindtap="onToggle" data-item="{{item}}">
+        <text wx:if="{{!isAdded}}" class="add-icon">+</text>
+        <text wx:else class="delete-icon">×</text>
+      </view>
     </view>
   </view>
 </view>

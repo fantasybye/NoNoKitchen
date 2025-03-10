@@ -1,3 +1,126 @@
 .goods-item {
-  /* 样式定义 */
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-start;
+  background-color: #fff;
+  padding: 25rpx 20rpx;
+  margin-bottom: 20rpx;
+  border-radius: 16rpx;
+  box-shadow: 0 4rpx 10rpx rgba(0, 0, 0, 0.05);
+  position: relative;
+  border: none;
+  transition: all 0.3s ease;
+}
+
+.goods-item:last-of-type {
+  border-bottom: none;
+  margin-bottom: 30rpx;
+}
+
+.goods-item:active {
+  transform: scale(0.98);
+}
+
+.goods-item-image {
+  width: 150rpx;
+  height: 150rpx;
+  border-radius: 18rpx;
+  box-shadow: 0 4rpx 8rpx rgba(0, 0, 0, 0.1);
+  border: 4rpx solid #fff;
+}
+
+.goods-info-box {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  height: 150rpx;
+  flex: 1;
+  margin-left: 24rpx;
+}
+
+.goods-title {
+  color: #603813;
+  font-size: 34rpx;
+  font-weight: bold;
+}
+
+.goods-tools {
+  display: flex;
+  align-items: center;
+  margin-top: 6rpx;
+  justify-content: space-between;
+  font-weight: bold;
+  font-size: 32rpx;
+}
+
+.goods-price {
+  color: #06c1ae;
+  margin-left: -6rpx;
+}
+
+.goods-add {
+  margin-right: 20rpx;
+  color: #fff;
+  background-color: #ffb62f;
+  width: 60rpx;
+  height: 60rpx;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  border-radius: 50%;
+  font-size: 40rpx;
+  box-shadow: 0 4rpx 10rpx rgba(255, 182, 47, 0.3);
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.goods-add:active {
+  transform: scale(0.9);
+}
+
+.goods-add.added {
+  background-color: #ff6b6b;
+}
+
+.goods-add.added:before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 50rpx;
+  height: 50rpx;
+  background-color: rgba(255, 255, 255, 0.2);
+  border-radius: 50%;
+  transform: translate(-50%, -50%) scale(0);
+  animation: ripple 0.5s ease-out;
+}
+
+@keyframes ripple {
+  to {
+    transform: translate(-50%, -50%) scale(2.5);
+    opacity: 0;
+  }
+}
+
+.checkmark {
+  font-size: 34rpx;
+  font-weight: bold;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.15);
+}
+
+.add-icon {
+  font-size: 48rpx;
+  font-weight: bold;
+  padding-bottom: 8rpx;
+}
+
+.delete-icon {
+  font-size: 48rpx;
+  font-weight: bold;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.15);
+  padding-bottom: 8rpx;
 }

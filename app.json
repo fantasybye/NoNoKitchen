@@ -1,14 +1,17 @@
 {
   "pages": [
     "pages/menu/index",
+    "pages/upload-dish/index",
     "pages/index/index",
     "pages/logs/logs",
-    "pages/flex/index"
+    "pages/order/index",
+    "pages/confirm/index"
   ],
   "window": {
     "backgroundTextStyle": "light",
     "navigationBarBackgroundColor": "#fff",
     "navigationBarTitleText": "小布子厨房",
     "navigationBarTextStyle": "black"
-  }
+  },
+  "cloud": true
 }

@@ -1,0 +1,56 @@
+<!--pages/upload-dish/index.wxml-->
+<view class="wrapper">
+  <view class="container">
+    <view class="form-header">
+      <view class="form-title">添加新菜品</view>
+      <view class="form-subtitle">填写菜品信息并上传图片</view>
+    </view>
+
+    <view class="form-content">
+      <view class="form-item">
+        <view class="form-label">菜品名称 <text class="required">*</text></view>
+        <view class="form-field">
+          <input class="form-input" type="text" placeholder="请输入菜品名称" value="{{dishName}}" bindinput="onDishNameInput"/>
+          <view class="error-text" wx:if="{{nameError}}">请输入菜品名称</view>
+        </view>
+      </view>
+
+      <view class="form-item">
+        <view class="form-label">菜品分类 <text class="required">*</text></view>
+        <view class="form-field">
+          <picker class="form-picker" bindchange="onCategoryChange" value="{{categoryIndex}}" range="{{categoryNames}}">
+            <view class="picker-content">
+              <text class="{{categoryIndex !== null ? 'picker-text-selected' : 'picker-text-placeholder'}}">{{categoryNames[categoryIndex] || '请选择分类'}}</text>
+              <text class="picker-arrow">▼</text>
+            </view>
+          </picker>
+          <view class="error-text" wx:if="{{categoryError}}">请选择菜品分类</view>
+        </view>
+      </view>
+
+      <view class="form-item">
+        <view class="form-label">菜品图片</view>
+        <view class="form-field">
+          <view class="upload-area" bindtap="chooseImage">
+            <block wx:if="{{tempImagePath}}">
+              <image class="dish-image" src="{{tempImagePath}}" mode="aspectFill"></image>
+              <view class="change-image-btn">更换图片</view>
+            </block>
+            <block wx:else>
+              <view class="upload-placeholder">
+                <view class="upload-icon-wrap">
+                  <text class="upload-plus">+</text>
+                </view>
+                <text class="upload-text">点击上传图片</text>
+              </view>
+            </block>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <view class="form-footer">
+      <button class="submit-btn" bindtap="submitDish">保存菜品</button>
+    </view>
+  </view>
+</view>

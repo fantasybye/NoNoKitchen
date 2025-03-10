@@ -1,74 +1,171 @@
 <!--pages/menu/index.wxml-->
-<scroll-view class="tabs" scroll-left="{{scrollLeft}}" scroll-with-animation="true">
-  <view class="tabs-item {{currentTab==0 ? 'active' : ''}}" data-tab="0" bindtap="setCurrentTab">点菜</view>
-  <view class="tabs-item {{currentTab==1 ? 'active' : ''}}" data-tab="1" bindtap="setCurrentTab">评价</view>
-</scroll-view>
-<swiper class="tabs-content" current="{{currentTab}}" bindchange="changeTab">
-  <swiper-item class="tabs-content-item">
-    <view class="goods-content">
-      <scroll-view
-        class="category-box"
-        scroll-y="true"
-        scroll-into-view="category-Box-item-{{categoryBoxScrollIntoView}}"
-        bindscroll="doCategoryBoxScroll"
-        style="height:100%;"
-      >
-        <category-item
-          wx:for="{{categories}}"
-          wx:key="id"
-          category="{{item.id}}"
-          active="{{currentCategory == item.id}}"
-          icon="{{item.icon}}"
-          name="{{item.name}}"
-          bindswitchCategory="switchCategory">
-        </category-item>
-      </scroll-view>
-      <scroll-view
-        class="category-contents"
-        scroll-y="true"
-        scroll-into-view="category-contents-item-{{currentCategoryContent}}"
-        scroll-with-animation="{{isScrollWithAnimation}}"
-        bindscroll="doCategoryContentsScroll"
-        bindscrolltolower="doCategoryContentsToLower"
-        lower-threshold="100"
-        style="height:100%;"
-      >
-        <view
-          wx:for="{{categories}}"
-          wx:key="id"
-          id="category-contents-item-{{item.id}}"
-          class="category-contents-item"
+<view class="wrapper">
+  <view class="header-slogan">
+    <view class="slogan-text">本厨房由御猪园大总管小布子倾情打造</view>
+  </view>
+
+  <scroll-view class="tabs" scroll-left="{{scrollLeft}}" scroll-with-animation="true">
+    <view class="tabs-item {{currentTab==0 ? 'active' : ''}}" data-tab="0" bindtap="setCurrentTab">点菜</view>
+    <view class="tabs-item {{currentTab==1 ? 'active' : ''}}" data-tab="1" bindtap="setCurrentTab">订单</view>
+  </scroll-view>
+
+  <swiper class="tabs-content" current="{{currentTab}}" bindchange="changeTab">
+    <!-- 点菜页面 -->
+    <swiper-item class="tabs-content-item">
+      <view class="goods-content" wx:if="{{isLoaded}}">
+        <!-- 左侧分类列表 -->
+        <scroll-view
+          class="category-box"
+          scroll-y="true"
+          scroll-into-view="category-Box-item-{{categoryBoxScrollIntoView}}"
+          bindscroll="doCategoryBoxScroll"
+          style="height:100%;"
         >
-          <view class="goods-box-title">
-            <view class="{{currentCategoryTitle==item.id?'fixed-title':''}}">{{item.name}}</view>
-          </view>
+          <category-item
+            wx:for="{{categories}}"
+            wx:key="id"
+            category="{{item.id}}"
+            active="{{currentCategory == item.id}}"
+            icon="{{item.icon}}"
+            name="{{item.name}}"
+            count="{{categoryCounts[item.id] || 0}}"
+            bindswitchCategory="switchCategory">
+          </category-item>
+        </scroll-view>
+
+        <!-- 右侧菜品列表 -->
+        <scroll-view
+          class="category-contents"
+          scroll-y="true"
+          scroll-into-view="category-contents-item-{{currentCategoryContent}}"
+          scroll-with-animation="{{isScrollWithAnimation}}"
+          bindscroll="doCategoryContentsScrollThrottled"
+          bindscrolltolower="doCategoryContentsToLower"
+          lower-threshold="100"
+          style="height:100%;"
+        >
           <view class="goods-box">
-            <goods-item
-              wx:for="{{goods}}"
-              wx:key="id"
-              wx:if="{{item.id == currentCategory}}"
-              image="{{item.image}}"
-              title="{{item.title}}"
-              bindaddToCart="addToCart">
-            </goods-item>
+            <block wx:if="{{currentCategoryDishes.length > 0}}">
+              <goods-item
+                class="goods-item"
+                wx:for="{{currentCategoryDishes}}"
+                wx:key="id"
+                image="{{item.image}}"
+                title="{{item.title}}"
+                item="{{item}}"
+                bindaddToCart="addToCart"
+                bindremoveFromCart="removeFromCart">
+              </goods-item>
+            </block>
+            <block wx:else>
+              <view class="no-dishes">
+                <view class="no-dishes-text">暂无菜品</view>
+              </view>
+            </block>
+          </view>
+        </scroll-view>
+      </view>
+
+      <!-- 购物车底部栏 -->
+      <view class="shopping-box">
+        <view class="cart-btn {{cartItems.length > 0 ? 'active' : ''}}" bindtap="toggleCartPopup">
+          <image src="../../images/footer-icon/cart.png"></image>
+          <block wx:if="{{cartItems.length > 0}}">
+            <view class="cart-count">{{cartItems.length}}</view>
+          </block>
+        </view>
+        <view class="cart-spacer"></view>
+        <view class="confirm-btn" bindtap="submitOrder">确认下单</view>
+      </view>
+    </swiper-item>
+
+    <!-- 订单页面 -->
+    <swiper-item class="tabs-content-item">
+      <view wx:if="{{orders.length === 0}}" class="no-orders">
+        <view class="no-orders-text">暂无订单</view>
+      </view>
+      <block wx:else>
+        <scroll-view
+          class="orders-list"
+          scroll-y="true"
+          bindscrolltolower="loadMoreOrders"
+          lower-threshold="50"
+        >
+          <view
+            wx:for="{{orders}}"
+            wx:key="_id"
+            class="order-item"
+            bindtap="viewOrderDetail"
+            data-id="{{item._id}}"
+          >
+            <view class="order-date">{{item.createTime}}</view>
+            <view class="order-info">
+              <view class="order-count">共{{item.dishes.length}}个菜品</view>
+              <view class="order-arrow">></view>
+            </view>
+          </view>
+          <view wx:if="{{hasMore}}" class="load-more">加载更多...</view>
+        </scroll-view>
+      </block>
+      <view class="order-page-footer">
+        <view class="add-dish-btn" bindtap="navigateToUploadDish">添加菜品</view>
+      </view>
+    </swiper-item>
+  </swiper>
+
+  <!-- 购物车弹出窗 -->
+  <view class="mask {{isCartPopupShow ? 'show' : ''}}" bindtap="closeCartPopup"></view>
+  <view class="cart-popup {{isCartPopupShow ? 'show' : ''}}">
+    <view class="cart-popup-header">
+      <view class="cart-popup-title">已选菜品</view>
+      <view class="cart-popup-close" bindtap="closeCartPopup">×</view>
+    </view>
+    <view class="cart-popup-content">
+      <view class="cart-popup-empty" wx:if="{{cartItems.length === 0}}">
+        <view>购物车是空的</view>
+      </view>
+      <view class="cart-popup-list" wx:else>
+        <view class="cart-popup-item" wx:for="{{cartItems}}" wx:key="id">
+          <view class="cart-popup-item-info">
+            <view class="cart-popup-item-name">{{item.title}}</view>
+            <view class="cart-popup-item-category">{{categories[item.categoryId].name}}</view>
+          </view>
+          <view class="cart-popup-item-action">
+            <image class="delete-btn" src="../../images/footer-icon/delete.png" catchtap="removeFromCart" data-item="{{item}}"></image>
           </view>
         </view>
-      </scroll-view>
+      </view>
     </view>
-  </swiper-item>
-  <swiper-item class="tabs-content-item">
-    <view class="content">本厨房由御猪园大总管小布子倾情打造</view>
-  </swiper-item>
-</swiper>
-<view class="shopping-box">
-  <view class="cart-bth">
-    <image src="../../images/footer-icon/cart.png"></image>
-    <view class="cart-count">{{cart.length}}</view>
+    <view class="cart-popup-footer">
+      <view class="cart-popup-submit" bindtap="submitOrder">确认下单</view>
+    </view>
   </view>
-  <view class="cart-content">
-    <block wx:for="{{cart}}" wx:key="id">
-      <view>{{item.title}} x {{item.quantity}}</view>
-    </block>
+
+  <!-- 订单详情弹窗 -->
+  <view class="mask {{isOrderDetailShow ? 'show' : ''}}" bindtap="closeOrderDetail"></view>
+  <view class="order-detail-popup {{isOrderDetailShow ? 'show' : ''}}">
+    <view class="order-detail-header">
+      <view class="order-detail-title">订单详情</view>
+      <view class="order-detail-close" bindtap="closeOrderDetail">×</view>
+    </view>
+    <view class="order-detail-content">
+      <view class="order-detail-time">下单时间：{{currentOrder.createTime}}</view>
+      <view class="order-detail-dishes">
+        <view class="order-detail-dish-item" wx:for="{{currentOrder.dishes}}" wx:key="id">
+          <view class="order-detail-dish-info">
+            <view class="order-detail-dish-name">{{item.title}}</view>
+            <view class="order-detail-dish-category">{{categories[item.categoryId].name}}</view>
+          </view>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 加载中提示 -->
+  <view class="loading {{isLoaded?'hidden':''}}">
+    <view class="loading-container">
+      <view class="loading-icon"></view>
+      <view class="loading-text">美食加载中...</view>
+    </view>
   </view>
 </view>
-<view animation="{{animationData}}" class="loading {{isLoaded?'hidden':''}}">数据正在加载中</view>

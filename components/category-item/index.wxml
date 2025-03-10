@@ -1,6 +1,9 @@
 <view class="category-item {{active ? 'active' : ''}}" data-category="{{category}}" bindtap="onTap">
   <view class="category-item-inner">
-    <image src="{{icon}}"></image>
-    <text>{{name}}</text>
+    <view class="category-icon-wrapper">
+      <image class="category-icon" src="{{icon}}" mode="aspectFit"></image>
+    </view>
+    <text class="category-text">{{name}}</text>
+    <view wx:if="{{count > 0}}" class="category-count">{{count}}</view>
   </view>
 </view>

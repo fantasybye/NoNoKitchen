@@ -1,1 +1,6 @@
-{}
+{
+  "usingComponents": {
+    "category-item": "../../components/category-item/index",
+    "goods-item": "../../components/goods-item/index"
+  }
+}

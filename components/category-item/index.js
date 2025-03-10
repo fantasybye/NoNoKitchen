@@ -1,15 +1,17 @@
 Component({
   properties: {
-    image: String,
-    title: String,
-    intro: String,
-    sales: Number,
-    likes: Number,
-    price: Number
+    category: Number,
+    active: Boolean,
+    icon: String,
+    name: String,
+    count: {
+      type: Number,
+      value: 0
+    }
   },
   methods: {
-    onAdd() {
-      this.triggerEvent('addToCart', { title: this.data.title });
-    }
+    onTap() {
+      this.triggerEvent('switchCategory', { category: this.data.category });
+    },
   }
 });
