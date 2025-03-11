@@ -1,16 +1,11 @@
+const { CATEGORIES, CATEGORY_NAMES } = require('../../utils/categoryConfig');
+
 Page({
   data: {
     dishName: '',
     categoryIndex: null,
-    categories: [
-      { id: 0, name: '荤菜' },
-      { id: 1, name: '素菜' },
-      { id: 2, name: '汤菜' },
-      { id: 3, name: '主食' },
-      { id: 4, name: '甜点' },
-      { id: 5, name: '水果' },
-    ],
-    categoryNames: ['荤菜', '素菜', '汤菜', '主食', '甜点', '水果'],
+    categories: CATEGORIES,
+    categoryNames: CATEGORY_NAMES,
     tempImagePath: '',
     cloudImagePath: '',
     nameError: false,
@@ -123,6 +118,9 @@ Page({
         icon: 'success',
         duration: 2000
       });
+
+      // 设置刷新菜品目录标记
+      wx.setStorageSync('needRefreshDishes', true);
 
       // 延迟返回上一页
       setTimeout(() => {

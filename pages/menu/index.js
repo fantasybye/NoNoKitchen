@@ -3,6 +3,7 @@ const { PAGE_CONFIG } = require('../../utils/config');
 const { throttle, showConfirm, showSuccess, showLoading, hideLoading, handleError } = require('../../utils/util');
 const orderService = require('../../services/orderService');
 const dishService = require('../../services/dishService');
+const { CATEGORIES } = require('../../utils/categoryConfig');
 
 Page({
   data: {
@@ -41,14 +42,8 @@ Page({
     allDishes: [],
     currentCategoryDishes: [],
 
-    categories: [
-      { id: 0, icon: '../../images/category-icon/huncai.png', name: '荤菜' },
-      { id: 1, icon: '../../images/category-icon/sucai.png', name: '素菜' },
-      { id: 2, icon: '../../images/category-icon/tang.png', name: '汤菜' },
-      { id: 3, icon: '../../images/category-icon/zhushi.png', name: '主食' },
-      { id: 4, icon: '../../images/category-icon/tiandian.png', name: '甜点' },
-      { id: 5, icon: '../../images/category-icon/shuiguo.png', name: '水果' },
-    ],
+    // 使用导入的类目配置
+    categories: CATEGORIES,
 
     imageCache: new Map(), // 用于缓存图片加载状态
   },
@@ -61,6 +56,22 @@ Page({
       currentOrder: null
     });
     this.initPage();
+  },
+
+  onShow: function () {
+    // 检查是否需要刷新菜品目录
+    if (wx.getStorageSync('needRefreshDishes')) {
+      // 清除刷新标记
+      wx.removeStorageSync('needRefreshDishes');
+      // 重新加载菜品数据
+      this.loadDishes().then(() => {
+        wx.showToast({
+          title: '菜品已更新',
+          icon: 'success',
+          duration: 1500
+        });
+      });
+    }
   },
 
   // 切换标签页
@@ -159,8 +170,10 @@ Page({
         allDishes: dishes,
         currentCategoryDishes: this.filterDishesByCategory(this.data.currentCategory)
       });
+      return Promise.resolve();
     } catch (error) {
       console.error('加载菜品失败:', error);
+      return Promise.reject(error);
     }
   },
 
