@@ -20,8 +20,10 @@
         <view class="form-field">
           <picker class="form-picker" bindchange="onCategoryChange" value="{{categoryIndex}}" range="{{categoryNames}}">
             <view class="picker-content">
-              <text class="{{categoryIndex !== null ? 'picker-text-selected' : 'picker-text-placeholder'}}">{{categoryNames[categoryIndex] || '请选择分类'}}</text>
-              <text class="picker-arrow">▼</text>
+              <view class="picker-text {{categoryIndex !== null ? 'picker-text-selected' : 'picker-text-placeholder'}}">
+                {{categoryNames[categoryIndex] || '请选择分类'}}
+              </view>
+              <view class="picker-arrow">▼</view>
             </view>
           </picker>
           <view class="error-text" wx:if="{{categoryError}}">请选择菜品分类</view>
