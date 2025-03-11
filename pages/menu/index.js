@@ -386,5 +386,12 @@ Page({
     }
   },
 
+  // 导航到上传菜品页面
+  navigateToUploadDish: function() {
+    wx.navigateTo({
+      url: '/pages/upload-dish/index'
+    });
+  },
+
   // 其他页面方法保持不变...
 });
