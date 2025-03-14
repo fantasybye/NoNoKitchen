@@ -48,19 +48,21 @@ Page({
     imageCache: new Map(), // 用于缓存图片加载状态
   },
 
-  onLoad: function (options) {
-    // 确保弹窗状态为关闭
-    this.setData({
-      isCartPopupShow: false,
-      isOrderDetailShow: false,
-      currentOrder: null
-    });
+  onLoad(options) {
     this.initPage();
   },
 
-  onShow: function () {
-    // 检查是否需要刷新菜品目录
-    if (wx.getStorageSync('needRefreshDishes')) {
+  async onShow() {
+    // 如果页面刚初始化且未加载数据，确保加载菜品
+    if (this.data.allDishes.length === 0) {
+      console.log('首次加载菜品数据');
+      await this.loadDishes();
+    }
+
+    // 检查是否需要刷新菜品列表
+    const refreshFlag = wx.getStorageSync('needRefreshDishes');
+    if (refreshFlag) {
+      console.log('检测到需要刷新菜品列表');
       // 清除刷新标记
       wx.removeStorageSync('needRefreshDishes');
       // 重新加载菜品数据
@@ -170,6 +172,10 @@ Page({
         allDishes: dishes,
         currentCategoryDishes: this.filterDishesByCategory(this.data.currentCategory)
       });
+
+      // 预加载所有菜品图片
+      this.preloadImages(dishes);
+
       return Promise.resolve();
     } catch (error) {
       console.error('加载菜品失败:', error);
@@ -403,6 +409,38 @@ Page({
   navigateToUploadDish: function() {
     wx.navigateTo({
       url: '/pages/upload-dish/index'
+    });
+  },
+
+  // 添加预加载图片的方法
+  preloadImages(dishes) {
+    if (!dishes || dishes.length === 0) return;
+
+    console.log('开始预加载', dishes.length, '张菜品图片');
+    const imageUrls = dishes.map(dish => dish.image);
+
+    // 过滤掉空URL
+    const validUrls = imageUrls.filter(url => url && url.trim() !== '');
+
+    if (validUrls.length === 0) return;
+
+    // 创建计数器跟踪加载进度
+    let loadedCount = 0;
+
+    validUrls.forEach(url => {
+      wx.getImageInfo({
+        src: url,
+        success: () => {
+          loadedCount++;
+          if (loadedCount === validUrls.length) {
+            console.log('所有菜品图片预加载完成');
+          }
+        },
+        fail: (err) => {
+          console.error('图片预加载失败:', url, err);
+          loadedCount++;
+        }
+      });
     });
   },
 
