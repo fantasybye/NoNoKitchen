@@ -412,33 +412,82 @@ Page({
     });
   },
 
-  // 添加预加载图片的方法
+  // 修改预加载图片的方法
   preloadImages(dishes) {
     if (!dishes || dishes.length === 0) return;
 
     console.log('开始预加载', dishes.length, '张菜品图片');
-    const imageUrls = dishes.map(dish => dish.image);
+    const imageUrls = dishes.map(dish => dish.image).filter(url => url && url.trim() !== '');
 
-    // 过滤掉空URL
-    const validUrls = imageUrls.filter(url => url && url.trim() !== '');
+    if (imageUrls.length === 0) return;
 
-    if (validUrls.length === 0) return;
+    // 先将云文件ID转换为临时可访问的URL
+    this.getTemporaryUrls(imageUrls).then(tempUrls => {
+      console.log('获取到临时URL:', tempUrls.length);
 
-    // 创建计数器跟踪加载进度
-    let loadedCount = 0;
+      // 创建计数器跟踪加载进度
+      let loadedCount = 0;
 
-    validUrls.forEach(url => {
-      wx.getImageInfo({
-        src: url,
-        success: () => {
-          loadedCount++;
-          if (loadedCount === validUrls.length) {
-            console.log('所有菜品图片预加载完成');
+      tempUrls.forEach(url => {
+        wx.getImageInfo({
+          src: url,
+          success: () => {
+            loadedCount++;
+            if (loadedCount === tempUrls.length) {
+              console.log('所有菜品图片预加载完成');
+            }
+          },
+          fail: (err) => {
+            console.error('图片预加载失败:', url, err);
+            loadedCount++;
           }
+        });
+      });
+    }).catch(err => {
+      console.error('获取临时URL失败:', err);
+    });
+  },
+
+  // 添加新方法：将云文件ID转换为临时URL
+  getTemporaryUrls(fileIDs) {
+    return new Promise((resolve, reject) => {
+      // 处理云开发路径
+      const cloudIDs = fileIDs.filter(url => url.startsWith('cloud://'));
+
+      // 如果没有云存储路径，直接返回原始URLs
+      if (cloudIDs.length === 0) {
+        resolve(fileIDs);
+        return;
+      }
+
+      // 获取临时文件URL
+      wx.cloud.getTempFileURL({
+        fileList: cloudIDs,
+        success: res => {
+          // 创建映射表 - 从原始fileID到临时URL
+          const urlMap = {};
+          res.fileList.forEach(item => {
+            if (item.status === 0) { // 0表示成功
+              urlMap[item.fileID] = item.tempFileURL;
+            } else {
+              console.warn('获取临时URL失败:', item.fileID, item.errMsg);
+            }
+          });
+
+          // 替换原始URL为临时URL
+          const resultUrls = fileIDs.map(url => {
+            if (url.startsWith('cloud://') && urlMap[url]) {
+              return urlMap[url];
+            }
+            return url; // 保留非云存储URL不变
+          });
+
+          resolve(resultUrls);
         },
-        fail: (err) => {
-          console.error('图片预加载失败:', url, err);
-          loadedCount++;
+        fail: err => {
+          console.error('获取临时URL批量失败:', err);
+          // 即使失败也返回原始URLs，继续尝试加载那些不是云存储的图片
+          resolve(fileIDs);
         }
       });
     });
